@@ -250,8 +250,8 @@ works2df <- function(data, abstract = TRUE, verbose = TRUE,
           c(l_author, l[c("author_position", "is_corresponding")],
             aff_raw, first_inst)
         } else {
-          tmp = tibble::as_tibble(replace_w_na(c(l_author, l[c("author_position", "is_corresponding")], aff_raw)))
-          tmp$institution = list(first_inst)
+          tmp <- tibble::as_tibble(replace_w_na(c(l_author, l[c("author_position", "is_corresponding")], aff_raw)))
+          tmp$institution <- list(first_inst)
           tmp
         }
       })
