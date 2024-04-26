@@ -135,7 +135,8 @@ oa2df <- function(data, entity, options = NULL, count_only = FALSE, group_by = N
 #'
 works2df <- function(data, abstract = TRUE, verbose = TRUE,
                      pb = if (verbose) oa_progress(length(data)) else NULL,
-                     use_first_institution = TRUE) {
+                     use_first_institution = TRUE,
+                     use_first_affiliation_string = TRUE) {
 
   col_order <- c(
     "id", "title", "display_name", "author", "ab", "publication_date", "relevance_score",
@@ -222,8 +223,7 @@ works2df <- function(data, abstract = TRUE, verbose = TRUE,
         if (length(inst_idx) > 0 && any(inst_idx)) {
           if(use_first_institution) {
             first_inst <- l_inst[inst_idx][[1]]
-            first_inst$lineage <- paste(first_inst$lineage,
-                                        collapse = ", ")
+            first_inst$lineage <- paste(first_inst$lineage, collapse = ", ")
             first_inst <- prepend(first_inst, "institution")
           } else {
             first_inst <- lapply(l_inst[inst_idx], function(x) {
@@ -240,22 +240,37 @@ works2df <- function(data, abstract = TRUE, verbose = TRUE,
             first_inst <- tibble::as_tibble(first_inst)
           }
         }
-        aff_raw <- list(au_affiliation_raw = l$raw_affiliation_string[1])
+        if(use_first_affiliation_string) {
+          au_affiliation_raw <- unlist(replace_w_na(l$raw_affiliation_strings[1]))
+        } else {
+          if(length(l$raw_affiliation_strings) == 0) {
+            au_affiliation_raw <- tibble::tibble(au_affiliation_raw = NA)
+          } else {
+            au_affiliation_raw <- tibble::tibble(au_affiliation_raw = unlist(l$raw_affiliation_strings))
+          }
+        }
         l_author <- if (length(l$author) > 0) {
           prepend(replace_w_na(l$author), "au")
         } else {
           empty_list(c("au_id", "au_display_name", "au_orcid"))
         }
-        if(use_first_institution) {
-          c(l_author, l[c("author_position", "is_corresponding")],
-            aff_raw, first_inst)
+        if(use_first_affiliation_string) {
+          if(use_first_institution) {
+            c(l_author, l[c("author_position", "is_corresponding")], au_affiliation_raw = au_affiliation_raw, first_inst)
+          } else {
+            tmp <- tibble::as_tibble(replace_w_na(c(l_author, l[c("author_position", "is_corresponding")])))
+            tmp$au_affiliation_raw <- au_affiliation_raw
+            tmp$institution <- list(first_inst)
+            tmp
+          }
         } else {
-          tmp <- tibble::as_tibble(replace_w_na(c(l_author, l[c("author_position", "is_corresponding")], aff_raw)))
+          tmp <- tibble::as_tibble(replace_w_na(c(l_author, l[c("author_position", "is_corresponding")])))
+          tmp$au_affiliation_raw <- list(au_affiliation_raw)
           tmp$institution <- list(first_inst)
           tmp
         }
       })
-      if(use_first_institution) {
+      if(use_first_institution & use_first_affiliation_string) {
         author <- subs_na(author, "rbind_df")
       } else {
         author <- list(do.call(rbind, author))
