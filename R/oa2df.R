@@ -358,8 +358,8 @@ abstract_build <- function(ab) {
 #' query_author <- oa_query(
 #'   identifier = NULL,
 #'   entity = "authors",
-#'   last_known_institution.id = "I71267560",
-#'   works_count = ">99"
+#'   last_known_institutions.id = "I71267560",
+#'   works_count = ">500"
 #' )
 #'
 #' res <- oa_request(
@@ -410,14 +410,13 @@ authors2df <- function(data, verbose = TRUE,
       fields$type,
       SIMPLIFY = FALSE
     )
-    sub_affiliation <- item$last_known_institution
-    if (!is.null(sub_affiliation)) {
+    sub_affiliation <- item$last_known_institutions
+    if (!is.null(sub_affiliation) && length(sub_affiliation)) {
+      sub_affiliation <- sub_affiliation[[1]]
       if (is.na(sub_affiliation[[1]])) {
         sub_affiliation <- empty_inst
       }
-      if (length(sub_affiliation$lineage) > 1) {
-        sub_affiliation$lineage <- paste(sub_affiliation$lineage, collapse = ", ")
-      }
+      sub_affiliation$lineage <- paste(sub_affiliation$lineage, collapse = ", ")
       sub_affiliation <- prepend(sub_affiliation, "affiliation")
     }
     sub_affiliation <- replace_w_na(sub_affiliation)
