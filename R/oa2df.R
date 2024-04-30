@@ -227,7 +227,7 @@ works2df <- function(data, abstract = TRUE, verbose = TRUE,
             first_inst <- prepend(first_inst, "institution")
           } else {
             first_inst <- lapply(l_inst[inst_idx], function(x) {
-              tmp <- x
+              tmp <- replace_w_na(x)
               tmp$lineage <- paste(x$lineage, collapse = ", ")
               tibble::as_tibble(prepend(tmp, "institution"))
             })
